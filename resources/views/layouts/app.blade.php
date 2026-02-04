@@ -256,14 +256,14 @@
                         <img src="/icons/icon-192x192.png" alt="Zhafira CRM" style="width: 64px; height: 64px; border-radius: 12px;">
                     </div>
 
-                    <!-- Auto Install Button -->
-                    <div id="autoInstallSection" style="display: none;" class="text-center mb-4">
-                        <button type="button" class="btn btn-zhafira btn-lg w-100" onclick="installPWA()">
+                    <!-- Install Button -->
+                    <div class="text-center mb-4">
+                        <button type="button" class="btn btn-zhafira btn-lg w-100" onclick="installPWA()" id="modalInstallBtn">
                             <i class="bi bi-download me-2"></i>Install Sekarang
                         </button>
-                        <hr class="my-4">
-                        <p class="text-muted small">Atau install manual:</p>
                     </div>
+                    <hr>
+                    <p class="text-muted small text-center mb-3">Jika tombol di atas tidak berfungsi, ikuti langkah manual:</p>
 
                     <!-- Manual Install Instructions -->
                     <div class="accordion" id="installAccordion">
@@ -450,6 +450,19 @@
                         if (modal) modal.hide();
                     }
                 });
+            } else {
+                // Auto-install not available, highlight manual instructions
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                if (isIOS) {
+                    // Expand iOS instructions
+                    const iosCollapse = document.getElementById('iosInstall');
+                    const androidCollapse = document.getElementById('androidInstall');
+                    if (iosCollapse) new bootstrap.Collapse(iosCollapse, {show: true});
+                    if (androidCollapse) new bootstrap.Collapse(androidCollapse, {show: false});
+                    alert('Untuk iPhone/iPad, gunakan Safari dan ikuti langkah di bawah.');
+                } else {
+                    alert('Gunakan menu browser (⋮) → "Install app" atau "Add to Home screen"');
+                }
             }
         }
 
