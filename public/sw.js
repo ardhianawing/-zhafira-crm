@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zhafira-crm-v1';
+const CACHE_NAME = 'zhafira-crm-v2';
 const urlsToCache = [
     '/',
     '/login',
@@ -99,9 +99,25 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
     event.notification.close();
 
-    if (event.action === 'open' || !event.action) {
-        event.waitUntil(
-            clients.openWindow('/')
-        );
+    // Get URL from notification data, or default to homepage
+    const urlToOpen = event.notification.data?.url || '/';
+
+    if (event.action === 'close') {
+        return; // Just close, don't open anything
     }
+
+    // Open the URL (action === 'open' or no action/direct click)
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+            // Check if there's already a window open
+            for (let client of windowClients) {
+                if (client.url.includes(self.location.origin) && 'focus' in client) {
+                    client.navigate(urlToOpen);
+                    return client.focus();
+                }
+            }
+            // No window open, open a new one
+            return clients.openWindow(urlToOpen);
+        })
+    );
 });
