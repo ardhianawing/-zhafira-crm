@@ -81,12 +81,21 @@
                 @endif
 
                 <ul class="navbar-nav">
-                    {{-- Install PWA Button --}}
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="installBtn" onclick="installPWA()" style="display: none;" title="Install Aplikasi">
-                            <i class="bi bi-download"></i> <span class="d-lg-none">Install</span>
+                    {{-- Install PWA Button (Auto) --}}
+                    <li class="nav-item" id="installBtnAuto" style="display: none;">
+                        <a class="nav-link" href="#" onclick="installPWA(); return false;" title="Install Aplikasi">
+                            <i class="bi bi-download"></i> <span class="d-lg-none">Install App</span>
                         </a>
                     </li>
+
+                    {{-- Install PWA Button (Manual) - Shows for marketing when not in standalone --}}
+                    @if(!auth()->user()->isAdmin())
+                    <li class="nav-item" id="installBtnManual">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#installInstructionModal" title="Install Aplikasi">
+                            <i class="bi bi-phone"></i> <span class="d-lg-none">Install App</span>
+                        </a>
+                    </li>
+                    @endif
 
                     {{-- Notification Bell Perbaikan Sejajar --}}
                     @if(!auth()->user()->isAdmin())

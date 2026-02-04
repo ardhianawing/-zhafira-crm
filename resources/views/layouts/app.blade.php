@@ -239,29 +239,71 @@
 <body>
     @include('layouts.partials.navbar')
 
-    <!-- PWA Install Popup Modal -->
+    <!-- PWA Install Instruction Modal -->
     @auth
     @if(auth()->user()->role === 'marketing')
-    <div class="modal fade" id="pwaInstallModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="installInstructionModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-zhafira text-white">
                     <h5 class="modal-title">
-                        <i class="bi bi-download me-2"></i>Install Aplikasi
+                        <i class="bi bi-phone me-2"></i>Install Aplikasi
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body text-center py-4">
-                    <img src="/icons/icon-192x192.png" alt="Zhafira CRM" class="mb-3" style="width: 80px; height: 80px; border-radius: 16px;">
-                    <h5>Zhafira CRM</h5>
-                    <p class="text-muted mb-3">Install aplikasi untuk mendapatkan notifikasi lead baru langsung di HP Anda!</p>
-                    <div class="d-flex flex-column gap-2">
-                        <button type="button" class="btn btn-zhafira btn-lg" onclick="installPWA()" id="installPwaBtn">
+                <div class="modal-body py-4">
+                    <div class="text-center mb-4">
+                        <img src="/icons/icon-192x192.png" alt="Zhafira CRM" style="width: 64px; height: 64px; border-radius: 12px;">
+                    </div>
+
+                    <!-- Auto Install Button -->
+                    <div id="autoInstallSection" style="display: none;" class="text-center mb-4">
+                        <button type="button" class="btn btn-zhafira btn-lg w-100" onclick="installPWA()">
                             <i class="bi bi-download me-2"></i>Install Sekarang
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="dismissPwaPrompt()">
-                            Nanti Saja
-                        </button>
+                        <hr class="my-4">
+                        <p class="text-muted small">Atau install manual:</p>
+                    </div>
+
+                    <!-- Manual Install Instructions -->
+                    <div class="accordion" id="installAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#androidInstall">
+                                    <i class="bi bi-android2 me-2 text-success"></i> Android (Chrome)
+                                </button>
+                            </h2>
+                            <div id="androidInstall" class="accordion-collapse collapse show" data-bs-parent="#installAccordion">
+                                <div class="accordion-body">
+                                    <ol class="mb-0 ps-3">
+                                        <li>Tap tombol <strong>⋮</strong> (menu) di pojok kanan atas</li>
+                                        <li>Pilih <strong>"Install app"</strong> atau <strong>"Add to Home screen"</strong></li>
+                                        <li>Tap <strong>"Install"</strong></li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#iosInstall">
+                                    <i class="bi bi-apple me-2"></i> iPhone (Safari)
+                                </button>
+                            </h2>
+                            <div id="iosInstall" class="accordion-collapse collapse" data-bs-parent="#installAccordion">
+                                <div class="accordion-body">
+                                    <ol class="mb-0 ps-3">
+                                        <li>Tap tombol <strong>Share</strong> <i class="bi bi-box-arrow-up"></i> di bawah</li>
+                                        <li>Scroll dan pilih <strong>"Add to Home Screen"</strong></li>
+                                        <li>Tap <strong>"Add"</strong></li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3 mb-0 small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Setelah install, Anda akan mendapat notifikasi setiap ada lead baru!
                     </div>
                 </div>
             </div>
@@ -368,24 +410,24 @@
 
         // PWA Install
         let deferredPrompt;
-        const installBtn = document.getElementById('installBtn');
+        const installBtnAuto = document.getElementById('installBtnAuto');
+        const installBtnManual = document.getElementById('installBtnManual');
+        const autoInstallSection = document.getElementById('autoInstallSection');
+
+        // Hide install buttons if already running as PWA
+        if (isInstalledPWA()) {
+            if (installBtnManual) installBtnManual.style.display = 'none';
+            if (installBtnAuto) installBtnAuto.style.display = 'none';
+        }
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            if (installBtn) installBtn.style.display = 'block';
 
-            @auth
-            @if(auth()->user()->role === 'marketing')
-            // Show install modal for marketing users if not dismissed before
-            if (!localStorage.getItem('pwaPromptDismissed') && !isInstalledPWA()) {
-                setTimeout(() => {
-                    const modal = new bootstrap.Modal(document.getElementById('pwaInstallModal'));
-                    modal.show();
-                }, 2000);
-            }
-            @endif
-            @endauth
+            // Show auto install button, hide manual
+            if (installBtnAuto) installBtnAuto.style.display = 'block';
+            if (installBtnManual) installBtnManual.style.display = 'none';
+            if (autoInstallSection) autoInstallSection.style.display = 'block';
         });
 
         function installPWA() {
@@ -395,12 +437,14 @@
                     if (choiceResult.outcome === 'accepted') {
                         console.log('PWA installed');
                         localStorage.setItem('pwaInstalled', 'true');
+                        // Hide all install buttons
+                        if (installBtnAuto) installBtnAuto.style.display = 'none';
+                        if (installBtnManual) installBtnManual.style.display = 'none';
                     }
                     deferredPrompt = null;
-                    if (installBtn) installBtn.style.display = 'none';
 
                     // Close modal if open
-                    const modalEl = document.getElementById('pwaInstallModal');
+                    const modalEl = document.getElementById('installInstructionModal');
                     if (modalEl) {
                         const modal = bootstrap.Modal.getInstance(modalEl);
                         if (modal) modal.hide();
@@ -409,22 +453,9 @@
             }
         }
 
-        function dismissPwaPrompt() {
-            // Remember dismissal for 7 days
-            localStorage.setItem('pwaPromptDismissed', Date.now());
-        }
-
         function isInstalledPWA() {
-            // Check if running as installed PWA
             return window.matchMedia('(display-mode: standalone)').matches
-                || window.navigator.standalone === true
-                || localStorage.getItem('pwaInstalled') === 'true';
-        }
-
-        // Check if dismissed more than 7 days ago, reset if so
-        const dismissedTime = localStorage.getItem('pwaPromptDismissed');
-        if (dismissedTime && (Date.now() - parseInt(dismissedTime)) > 7 * 24 * 60 * 60 * 1000) {
-            localStorage.removeItem('pwaPromptDismissed');
+                || window.navigator.standalone === true;
         }
     </script>
     @stack('scripts')
