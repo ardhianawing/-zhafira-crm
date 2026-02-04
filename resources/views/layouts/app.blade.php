@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Zhafira CRM')</title>
+
+    <meta name="theme-color" content="#0f3d2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Zhafira CRM">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --zhafira-green: #0f3d2e;
+            --zhafira-gold: #c9a227;
+            --zhafira-green-light: #1a5c44;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        /* PERBAIKAN NOTIFIKASI MOBILE */
+        .nav-link.position-relative {
+            display: flex !important;
+            align-items: center;
+        }
+
+        /* Menjaga angka notifikasi tetap sejajar di atas ikon lonceng */
+        .navbar-zhafira .badge-notification {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            padding: 2px 5px;
+            border-radius: 50%;
+            font-size: 0.6rem;
+            transform: translate(50%, -50%);
+        }
+
+        /* Styling CSS lainnya tetap sama */
+        .navbar-zhafira {
+            background-color: var(--zhafira-green) !important;
+        }
+
+        .navbar-zhafira .navbar-brand,
+        .navbar-zhafira .nav-link {
+            color: #fff !important;
+        }
+
+        .navbar-zhafira .nav-link:hover {
+            color: var(--zhafira-gold) !important;
+        }
+
+        .navbar-zhafira .nav-link.active {
+            color: var(--zhafira-gold) !important;
+            font-weight: 600;
+        }
+
+        .btn-zhafira {
+            background-color: var(--zhafira-green);
+            border-color: var(--zhafira-green);
+            color: #fff;
+        }
+
+        .btn-zhafira:hover {
+            background-color: var(--zhafira-green-light);
+            border-color: var(--zhafira-green-light);
+            color: #fff;
+        }
+
+        .btn-outline-zhafira {
+            border-color: var(--zhafira-green);
+            color: var(--zhafira-green);
+        }
+
+        .btn-outline-zhafira:hover {
+            background-color: var(--zhafira-green);
+            color: #fff;
+        }
+
+        .btn-gold {
+            background-color: var(--zhafira-gold);
+            border-color: var(--zhafira-gold);
+            color: #000;
+        }
+
+        .btn-gold:hover {
+            background-color: #b8921f;
+            border-color: #b8921f;
+            color: #000;
+        }
+
+        .card-header-zhafira {
+            background-color: var(--zhafira-green);
+            color: #fff;
+        }
+
+        .text-zhafira {
+            color: var(--zhafira-green);
+        }
+
+        .text-gold {
+            color: var(--zhafira-gold);
+        }
+
+        .bg-zhafira {
+            background-color: var(--zhafira-green);
+        }
+
+        .bg-zhafira-light {
+            background-color: rgba(15, 61, 46, 0.1);
+        }
+
+        .border-zhafira-light {
+            border-color: rgba(15, 61, 46, 0.2) !important;
+        }
+
+        .table th {
+            background-color: var(--zhafira-green);
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .stat-card {
+            border-left: 4px solid var(--zhafira-gold);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card .stat-icon {
+            font-size: 2rem;
+            color: var(--zhafira-gold);
+        }
+
+        .lead-card {
+            border-left: 4px solid var(--zhafira-gold);
+            margin-bottom: 1rem;
+        }
+
+        .lead-card.overdue {
+            border-left-color: #dc3545;
+            background-color: #fff5f5;
+        }
+
+        .badge-new {
+            background-color: #6c757d;
+        }
+
+        .badge-cold {
+            background-color: #0dcaf0;
+            color: #000;
+        }
+
+        .badge-warm {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .badge-hot {
+            background-color: #dc3545;
+        }
+
+        .badge-deal {
+            background-color: #198754;
+        }
+
+        .whatsapp-btn {
+            background-color: #25D366;
+            border-color: #25D366;
+            color: #fff;
+        }
+
+        .whatsapp-btn:hover {
+            background-color: #1da851;
+            border-color: #1da851;
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+
+            .btn-mobile-full {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            /* Khusus Mobile: Geser angka notif agar tidak nabrak teks */
+            .navbar-zhafira .badge-notification {
+                top: 15px;
+                right: auto;
+                left: 25px;
+            }
+        }
+
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #fff;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .sidebar .nav-link {
+            color: var(--zhafira-green);
+            padding: 0.75rem 1rem;
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: #f8f9fa;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: var(--zhafira-green);
+            color: #fff;
+        }
+
+        .sidebar .nav-link i {
+            width: 24px;
+        }
+    </style>
+    @stack('styles')
+</head>
+
+<body>
+    @include('layouts.partials.navbar')
+
+    <main class="py-4">
+        <div class="container-fluid px-4">
+            @if(session('success'))
+                <x-alert type="success" :message="session('success')" />
+            @endif
+
+            @if(session('error'))
+                <x-alert type="danger" :message="session('error')" />
+            @endif
+
+            @if(session('warning'))
+                <x-alert type="warning" :message="session('warning')" />
+            @endif
+
+            @yield('content')
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered'))
+                    .catch(err => console.log('SW registration failed'));
+            });
+        }
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBtn) installBtn.style.display = 'block';
+        });
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    deferredPrompt = null;
+                    if (installBtn) installBtn.style.display = 'none';
+                });
+            }
+        }
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        showNotification('Notifikasi Aktif', 'Anda akan menerima reminder follow-up');
+                    }
+                });
+            }
+        }
+        function showNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, { body: body, icon: '/icons/icon-192x192.png' });
+            }
+        }
+        @auth
+            document.addEventListener('DOMContentLoaded', function () {
+                if ('Notification' in window && Notification.permission === 'default') {
+                    setTimeout(() => { requestNotificationPermission(); }, 3000);
+                }
+            });
+        @endauth
+    </script>
+    @stack('scripts')
+</body>
+
+</html>
