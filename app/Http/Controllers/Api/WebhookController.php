@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Lead;
 use Illuminate\Http\Request;
 
@@ -90,19 +91,35 @@ class WebhookController extends Controller
             ]);
         }
 
+        // Auto-assign dengan rotator jika aktif
+        $assignedTo = null;
+        $assignedAt = null;
+        $assignedName = null;
+
+        if (AppSetting::isRotatorEnabled()) {
+            $nextMarketing = AppSetting::getNextMarketingForRotation();
+            if ($nextMarketing) {
+                $assignedTo = $nextMarketing->id;
+                $assignedAt = now();
+                $assignedName = $nextMarketing->nama_lengkap;
+            }
+        }
+
         $lead = Lead::create([
             'nama_customer' => $request->nama,
             'no_hp' => $phone,
             'status_prospek' => 'New',
             'sumber_lead' => 'WhatsApp',
             'keterangan' => $request->pesan,
-            'assigned_to' => null,
+            'assigned_to' => $assignedTo,
+            'assigned_at' => $assignedAt,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Lead berhasil masuk ke antrean',
+            'message' => 'Lead berhasil masuk',
             'lead_id' => $lead->id,
+            'assigned_to' => $assignedName,
             'action' => 'created'
         ]);
     }
