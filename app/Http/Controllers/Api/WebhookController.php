@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\Lead;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 
 class WebhookController extends Controller
@@ -114,6 +115,22 @@ class WebhookController extends Controller
             'assigned_to' => $assignedTo,
             'assigned_at' => $assignedAt,
         ]);
+
+        // Kirim push notification ke marketing yang di-assign
+        if ($assignedTo && $nextMarketing) {
+            try {
+                $pushService = new PushNotificationService();
+                $pushService->sendToUser(
+                    $nextMarketing,
+                    'Lead Baru dari WhatsApp!',
+                    "Nama: {$request->nama}\nNo HP: {$phone}",
+                    ['lead_id' => $lead->id, 'url' => '/marketing/leads/' . $lead->id]
+                );
+            } catch (\Exception $e) {
+                // Log error tapi jangan gagalkan request
+                \Log::error('Push notification failed: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'success' => true,

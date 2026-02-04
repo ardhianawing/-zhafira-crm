@@ -12,6 +12,7 @@ use App\Http\Controllers\Marketing\DashboardController as MarketingDashboardCont
 use App\Http\Controllers\Marketing\LeadController as MarketingLeadController;
 use App\Http\Controllers\Marketing\FollowUpController;
 use App\Http\Controllers\Marketing\NewsController as MarketingNewsController;
+use App\Http\Controllers\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root
@@ -33,6 +34,11 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+    // Push Notification routes
+    Route::get('/push/key', [PushSubscriptionController::class, 'vapidPublicKey'])->name('push.key');
+    Route::post('/push/subscribe', [PushSubscriptionController::class, 'subscribe'])->name('push.subscribe');
+    Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe'])->name('push.unsubscribe');
 });
 
 // Admin routes

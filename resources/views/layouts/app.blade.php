@@ -260,13 +260,82 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('SW registered'))
+                    .then(reg => {
+                        console.log('SW registered');
+                        @auth
+                        // Subscribe to push notifications after SW is ready
+                        subscribeToPush(reg);
+                        @endauth
+                    })
                     .catch(err => console.log('SW registration failed'));
             });
         }
+
+        // Push Notification Subscription
+        async function subscribeToPush(registration) {
+            try {
+                // Check if already subscribed
+                const existingSubscription = await registration.pushManager.getSubscription();
+                if (existingSubscription) {
+                    console.log('Already subscribed to push');
+                    return;
+                }
+
+                // Get VAPID public key from server
+                const response = await fetch('/push/key');
+                const { publicKey } = await response.json();
+
+                if (!publicKey) {
+                    console.log('VAPID key not configured');
+                    return;
+                }
+
+                // Request notification permission
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    console.log('Notification permission denied');
+                    return;
+                }
+
+                // Subscribe to push
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+
+                // Send subscription to server
+                await fetch('/push/subscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify(subscription)
+                });
+
+                console.log('Push subscription successful');
+            } catch (error) {
+                console.error('Push subscription failed:', error);
+            }
+        }
+
+        // Helper function to convert VAPID key
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        // PWA Install
         let deferredPrompt;
         const installBtn = document.getElementById('installBtn');
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -274,6 +343,7 @@
             deferredPrompt = e;
             if (installBtn) installBtn.style.display = 'block';
         });
+
         function installPWA() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
@@ -283,27 +353,6 @@
                 });
             }
         }
-        function requestNotificationPermission() {
-            if ('Notification' in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        showNotification('Notifikasi Aktif', 'Anda akan menerima reminder follow-up');
-                    }
-                });
-            }
-        }
-        function showNotification(title, body) {
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification(title, { body: body, icon: '/icons/icon-192x192.png' });
-            }
-        }
-        @auth
-            document.addEventListener('DOMContentLoaded', function () {
-                if ('Notification' in window && Notification.permission === 'default') {
-                    setTimeout(() => { requestNotificationPermission(); }, 3000);
-                }
-            });
-        @endauth
     </script>
     @stack('scripts')
 </body>

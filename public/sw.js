@@ -61,15 +61,29 @@ self.addEventListener('fetch', event => {
 
 // Handle push notifications
 self.addEventListener('push', event => {
-    const options = {
-        body: event.data ? event.data.text() : 'Ada follow-up yang harus dikerjakan!',
+    let data = {
+        title: 'Zhafira CRM',
+        body: 'Ada notifikasi baru!',
         icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
-        vibrate: [100, 50, 100],
-        data: {
-            dateOfArrival: Date.now(),
-            primaryKey: 1
-        },
+        data: {}
+    };
+
+    if (event.data) {
+        try {
+            data = { ...data, ...JSON.parse(event.data.text()) };
+        } catch (e) {
+            data.body = event.data.text();
+        }
+    }
+
+    const options = {
+        body: data.body,
+        icon: data.icon || '/icons/icon-192x192.png',
+        badge: '/icons/icon-192x192.png',
+        vibrate: [200, 100, 200],
+        tag: 'lead-notification',
+        renotify: true,
+        data: data.data || {},
         actions: [
             { action: 'open', title: 'Buka CRM' },
             { action: 'close', title: 'Tutup' }
@@ -77,7 +91,7 @@ self.addEventListener('push', event => {
     };
 
     event.waitUntil(
-        self.registration.showNotification('Zhafira CRM', options)
+        self.registration.showNotification(data.title, options)
     );
 });
 
