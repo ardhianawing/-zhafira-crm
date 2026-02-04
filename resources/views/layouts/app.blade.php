@@ -239,6 +239,37 @@
 <body>
     @include('layouts.partials.navbar')
 
+    <!-- PWA Install Popup Modal -->
+    @auth
+    @if(auth()->user()->role === 'marketing')
+    <div class="modal fade" id="pwaInstallModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-zhafira text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-download me-2"></i>Install Aplikasi
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <img src="/icons/icon-192x192.png" alt="Zhafira CRM" class="mb-3" style="width: 80px; height: 80px; border-radius: 16px;">
+                    <h5>Zhafira CRM</h5>
+                    <p class="text-muted mb-3">Install aplikasi untuk mendapatkan notifikasi lead baru langsung di HP Anda!</p>
+                    <div class="d-flex flex-column gap-2">
+                        <button type="button" class="btn btn-zhafira btn-lg" onclick="installPWA()" id="installPwaBtn">
+                            <i class="bi bi-download me-2"></i>Install Sekarang
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="dismissPwaPrompt()">
+                            Nanti Saja
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+    @endauth
+
     <main class="py-4">
         <div class="container-fluid px-4">
             @if(session('success'))
@@ -338,20 +369,62 @@
         // PWA Install
         let deferredPrompt;
         const installBtn = document.getElementById('installBtn');
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             if (installBtn) installBtn.style.display = 'block';
+
+            @auth
+            @if(auth()->user()->role === 'marketing')
+            // Show install modal for marketing users if not dismissed before
+            if (!localStorage.getItem('pwaPromptDismissed') && !isInstalledPWA()) {
+                setTimeout(() => {
+                    const modal = new bootstrap.Modal(document.getElementById('pwaInstallModal'));
+                    modal.show();
+                }, 2000);
+            }
+            @endif
+            @endauth
         });
 
         function installPWA() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('PWA installed');
+                        localStorage.setItem('pwaInstalled', 'true');
+                    }
                     deferredPrompt = null;
                     if (installBtn) installBtn.style.display = 'none';
+
+                    // Close modal if open
+                    const modalEl = document.getElementById('pwaInstallModal');
+                    if (modalEl) {
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                    }
                 });
             }
+        }
+
+        function dismissPwaPrompt() {
+            // Remember dismissal for 7 days
+            localStorage.setItem('pwaPromptDismissed', Date.now());
+        }
+
+        function isInstalledPWA() {
+            // Check if running as installed PWA
+            return window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true
+                || localStorage.getItem('pwaInstalled') === 'true';
+        }
+
+        // Check if dismissed more than 7 days ago, reset if so
+        const dismissedTime = localStorage.getItem('pwaPromptDismissed');
+        if (dismissedTime && (Date.now() - parseInt(dismissedTime)) > 7 * 24 * 60 * 60 * 1000) {
+            localStorage.removeItem('pwaPromptDismissed');
         }
     </script>
     @stack('scripts')
